@@ -1,4 +1,6 @@
+using NetBarcode.Graphics;
 using System;
+using System.Collections.Generic;
 
 namespace NetBarcode.Types
 {
@@ -17,10 +19,14 @@ namespace NetBarcode.Types
             _data = data + CheckDigit(data);
         }
         
-        /// <summary>
-        /// Encode the raw data using the EAN-8 algorithm.
-        /// </summary>
-        public string GetEncoding()
+		public string Data => _data;
+
+		public IRenderer Renderer => new DefaultRenderer();
+
+		/// <summary>
+		/// Encode the raw data using the EAN-8 algorithm.
+		/// </summary>
+		public List<Bar> GetEncoding()
         {
             //check length
             if (_data.Length != 8 && _data.Length != 7)
@@ -34,27 +40,44 @@ namespace NetBarcode.Types
                 throw new Exception("EEAN8-2: Numeric only.");
             }
 
-            //encode the data
-            var encodedData = "101";
+			//encode the data
+			List<Bar> encodedData = new List<Bar>();
+			encodedData.Add(new Bar(1, BarSize.Long));
+			encodedData.Add(new Bar(0, BarSize.Long));
+			encodedData.Add(new Bar(1, BarSize.Long));
 
             //first half (Encoded using left hand / odd parity)
             for (var i = 0; i < _data.Length / 2; i++)
             {
-                encodedData += _codesA[int.Parse(_data[i].ToString())];
+                string digits = _codesA[int.Parse(_data[i].ToString())];
+				foreach (char d in digits)
+				{
+					encodedData.Add(new Bar(int.Parse(new string(d, 1)), BarSize.Regular));
+				}
             }
 
             //center guard bars
-            encodedData += "01010";
+			encodedData.Add(new Bar(0, BarSize.Long));
+			encodedData.Add(new Bar(1, BarSize.Long));
+			encodedData.Add(new Bar(0, BarSize.Long));
+			encodedData.Add(new Bar(1, BarSize.Long));
+			encodedData.Add(new Bar(0, BarSize.Long));
 
-            //second half (Encoded using right hand / even parity)
-            for (var i = _data.Length / 2; i < _data.Length; i++)
+			//second half (Encoded using right hand / even parity)
+			for (var i = _data.Length / 2; i < _data.Length; i++)
             {
-                encodedData += _codesC[int.Parse(_data[i].ToString())];
-            }
+				string digits = _codesC[int.Parse(_data[i].ToString())];
+				foreach (char d in digits)
+				{
+					encodedData.Add(new Bar(int.Parse(new string(d, 1)), BarSize.Regular));
+				}
+			}
 
-            encodedData += "101";
+			encodedData.Add(new Bar(1, BarSize.Long));
+			encodedData.Add(new Bar(0, BarSize.Long));
+			encodedData.Add(new Bar(1, BarSize.Long));
 
-            return encodedData;
+			return encodedData;
         }
 
         private string CheckDigit(string data)

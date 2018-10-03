@@ -1,3 +1,4 @@
+using NetBarcode.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -28,23 +29,34 @@ namespace NetBarcode.Types
             _data = data;
         }
 
-        /// <summary>
-        /// Encodes data.
-        /// </summary>
-        /// <param name="data">Data to encode.</param>
-        /// <param name="code128Type">Type of encoding to lock to. (Code 128A, Code 128B, Code 128C)</param>
-        public Code128(string data, Code128Type code128Type)
+		public string Data => _data;
+
+		public IRenderer Renderer => new DefaultRenderer();
+
+		/// <summary>
+		/// Encodes data.
+		/// </summary>
+		/// <param name="data">Data to encode.</param>
+		/// <param name="code128Type">Type of encoding to lock to. (Code 128A, Code 128B, Code 128C)</param>
+		public Code128(string data, Code128Type code128Type)
         {
             _code128Type = code128Type;
             _data = data;
         }
 
-        public string GetEncoding()
+        public List<Bar> GetEncoding()
         {
             //initialize datastructure to hold encoding information
             Initialize();
 
-            return Encode();            
+			string encoded = Encode();
+			List<Bar> result = new List<Bar>();
+			foreach (char d in encoded)
+			{
+				result.Add(new Bar(int.Parse(new string(d, 1)), BarSize.Regular));
+			}
+
+			return result;
         }
         
         private void Initialize()

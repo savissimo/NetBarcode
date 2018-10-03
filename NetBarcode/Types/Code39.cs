@@ -1,5 +1,7 @@
+using NetBarcode.Graphics;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace NetBarcode.Types
 {
@@ -25,12 +27,16 @@ namespace NetBarcode.Types
             _data = data;
         }
 
-        /// <summary>
-        /// Encodes with Code39.
-        /// </summary>
-        /// <param name="data">_data to encode.</param>
-        /// <param name="extended">Allow Extended Code 39 (Full Ascii mode).</param>
-        public Code39(string data, bool extended)
+		public string Data => _data;
+
+		public IRenderer Renderer => new DefaultRenderer();
+
+		/// <summary>
+		/// Encodes with Code39.
+		/// </summary>
+		/// <param name="data">_data to encode.</param>
+		/// <param name="extended">Allow Extended Code 39 (Full Ascii mode).</param>
+		public Code39(string data, bool extended)
         {
             _data = data;
             _extended = extended;
@@ -52,7 +58,7 @@ namespace NetBarcode.Types
         /// <summary>
         /// Encode the raw data using the Code 39 algorithm.
         /// </summary>
-        public string GetEncoding()
+        public List<Bar> GetEncoding()
         {
             Initialize();
 
@@ -87,7 +93,13 @@ namespace NetBarcode.Types
 
             encodedData = encodedData.Substring(0, encodedData.Length-1);
 
-            return encodedData;
+			List<Bar> result = new List<Bar>();
+			foreach (char d in encodedData)
+			{
+				result.Add(new Bar(int.Parse(new string(d, 1)), BarSize.Regular));
+			}
+
+			return result;
         }
         
         private void Initialize()

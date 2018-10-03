@@ -1,4 +1,6 @@
+using NetBarcode.Graphics;
 using System;
+using System.Collections.Generic;
 using System.Data;
 
 namespace NetBarcode.Types
@@ -21,10 +23,14 @@ namespace NetBarcode.Types
             _data = data;
         }
 
-        /// <summary>
-        /// Encode the raw data using the Code 93 algorithm.
-        /// </summary>
-        public string GetEncoding()
+		public string Data => _data;
+
+		public IRenderer Renderer => new DefaultRenderer();
+
+		/// <summary>
+		/// Encode the raw data using the Code 93 algorithm.
+		/// </summary>
+		public List<Bar> GetEncoding()
         {
             Initialize();
 
@@ -49,7 +55,13 @@ namespace NetBarcode.Types
             //termination bar
             encodedData += "1";
 
-            return encodedData;
+			List<Bar> result = new List<Bar>();
+			foreach (char d in encodedData)
+			{
+				result.Add(new Bar(int.Parse(new string(d, 1)), BarSize.Regular));
+			}
+
+			return result;
         }
         
         private void Initialize()

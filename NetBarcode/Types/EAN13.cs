@@ -1,5 +1,7 @@
+using NetBarcode.Graphics;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace NetBarcode.Types
 {
@@ -20,11 +22,15 @@ namespace NetBarcode.Types
         {
             _data = CheckDigit(data);
         }
-	    
-        /// <summary>
-        /// Encode the raw data using the EAN-13 algorithm. (Can include the checksum already.  If it doesnt exist in the data then it will calculate it for you.  Accepted data lengths are 12 + 1 checksum or just the 12 data digits)
-        /// </summary>
-        public string GetEncoding()
+
+		public string Data => _data;
+
+		public IRenderer Renderer => new DefaultRenderer();
+
+		/// <summary>
+		/// Encode the raw data using the EAN-13 algorithm. (Can include the checksum already.  If it doesnt exist in the data then it will calculate it for you.  Accepted data lengths are 12 + 1 checksum or just the 12 data digits)
+		/// </summary>
+		public List<Bar> GetEncoding()
         {
             //check length of input
 	        if (_data.Length < 12 || _data.Length > 13)
@@ -38,50 +44,78 @@ namespace NetBarcode.Types
 	        }
 
             var patterncode = _eanPattern[int.Parse(_data[0].ToString())];
-            var encodedData = "101";
 
-            //first
-            //result += EAN_CodeA[Int32.Parse(RawData[0].ToString())];
+			List<Bar> encodedData = new List<Bar>();
+			encodedData.Add(new Bar(1, BarSize.Long));
+			encodedData.Add(new Bar(0, BarSize.Long));
+			encodedData.Add(new Bar(1, BarSize.Long));
 
-            //second
-            var pos = 0;
+			//first
+			//result += EAN_CodeA[Int32.Parse(RawData[0].ToString())];
+
+			//second
+			var pos = 0;
 	        
             while (pos < 6)
             {
 	            if (patterncode[pos] == 'a')
 	            {
-		            encodedData += _codeA[int.Parse(_data[pos + 1].ToString())];
-	            }
-	            else if (patterncode[pos] == 'b')
+					string digits = _codeA[int.Parse(_data[pos + 1].ToString())];
+					foreach (char d in digits)
+					{
+						encodedData.Add(new Bar(int.Parse(new string(d, 1)), BarSize.Regular));
+					}
+				}
+				else if (patterncode[pos] == 'b')
 	            {
-		            encodedData += _codeB[int.Parse(_data[pos + 1].ToString())];
-	            }
-	            
-                pos++;
+					string digits = _codeB[int.Parse(_data[pos + 1].ToString())];
+					foreach (char d in digits)
+					{
+						encodedData.Add(new Bar(int.Parse(new string(d, 1)), BarSize.Regular));
+					}
+				}
+
+				pos++;
             }
 
 
-            //add divider bars
-            encodedData += "01010";
+			//add divider bars
+			encodedData.Add(new Bar(0, BarSize.Long));
+			encodedData.Add(new Bar(1, BarSize.Long));
+			encodedData.Add(new Bar(0, BarSize.Long));
+			encodedData.Add(new Bar(1, BarSize.Long));
+			encodedData.Add(new Bar(0, BarSize.Long));
 
-            //get the third
-            pos = 1;
+			//get the third
+			pos = 1;
             while (pos <= 5)
             {
-                encodedData += _codeC[int.Parse(_data[(pos++) + 6].ToString())];
-            }//while
+				string digits = _codeC[int.Parse(_data[(pos++) + 6].ToString())];
+				foreach (char d in digits)
+				{
+					encodedData.Add(new Bar(int.Parse(new string(d, 1)), BarSize.Regular));
+				}
+			}//while
 
-            //checksum digit
-            var cs = int.Parse(_data[_data.Length - 1].ToString());
+			//checksum digit
+			var cs = int.Parse(_data[_data.Length - 1].ToString());
 
             //add checksum
-            encodedData += _codeC[cs];
+			{
+				string digits = _codeC[cs];
+				foreach (char d in digits)
+				{
+					encodedData.Add(new Bar(int.Parse(new string(d, 1)), BarSize.Regular));
+				}
+			}
 
-            //add ending bars
-            encodedData += "101";
+			//add ending bars
+			encodedData.Add(new Bar(1, BarSize.Long));
+			encodedData.Add(new Bar(0, BarSize.Long));
+			encodedData.Add(new Bar(1, BarSize.Long));
 
-            //get the manufacturer assigning country
-            InitializeCountryCodes();
+			//get the manufacturer assigning country
+			InitializeCountryCodes();
 	        var twodigitCode = _data.Substring(0, 2);
             var threedigitCode = _data.Substring(0, 3);
 	        

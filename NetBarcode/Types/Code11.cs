@@ -1,4 +1,6 @@
+using NetBarcode.Graphics;
 using System;
+using System.Collections.Generic;
 
 namespace NetBarcode.Types
 {
@@ -21,11 +23,15 @@ namespace NetBarcode.Types
         {
             _data = data;
         }
+
+		public string Data => _data;
+
+		public IRenderer Renderer => new DefaultRenderer();
         
         /// <summary>
         /// Encode the raw data using the Code 11 algorithm.
         /// </summary>
-        public string GetEncoding()
+        public List<Bar> GetEncoding()
         {
             if (!CheckNumericOnly(_data.Replace("-", "")))
             {
@@ -105,7 +111,13 @@ namespace NetBarcode.Types
             //stop bars
             result += _codes[11];
 
-            return result;
+			List<Bar> barResult = new List<Bar>();
+			foreach (char d in result)
+			{
+				barResult.Add(new Bar(int.Parse(new string(d, 1)), BarSize.Regular));
+			}
+
+			return barResult;
         }
     }
 }
